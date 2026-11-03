@@ -17,14 +17,17 @@ The addon works automatically once enabled.
 
 | Command      | What it does                                   |
 | ------------ | ---------------------------------------------- |
-| `/pac`       | Show help                                      |
+| `/pac`       | Open the options panel                         |
 | `/pac debug` | Toggle printing each popup's name as it opens |
+| `/pac help`  | List commands                                  |
 
 ### Keeping some popups in place
 
-Edit the `SKIP` table at the top of `PopupAtCursor.lua` and uncomment (or add)
-any popup names that should stay where Blizzard puts them. Use `/pac debug`
-to find a popup's name.
+Open **Options → AddOns → Popup At Cursor** (or type `/pac`) and check any
+popup that should stay where Blizzard puts it. The list shows common popups
+plus every popup you've seen, each with a short version of its prompt; hover
+a row for the full text. **Forget unchecked** clears seen popups you haven't
+checked. Settings are saved per account in `PopupAtCursorDB`.
 
 ## License
 
