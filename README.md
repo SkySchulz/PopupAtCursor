@@ -29,6 +29,16 @@ plus every popup you've seen, each with a short version of its prompt; hover
 a row for the full text. **Forget unchecked** clears seen popups you haven't
 checked. Settings are saved per account in `PopupAtCursorDB`.
 
+## Building a test package
+
+```sh
+build-tools/make-tarball.sh
+```
+
+This writes `.release/PopupAtCursor-<version>.tar.gz`, using the version from
+the `.toc` and including only the files the `.toc` loads. Untar it inside
+`Interface/AddOns/`.
+
 ## License
 
 [MIT](LICENSE)
