@@ -31,13 +31,34 @@ checked. Settings are saved per account in `PopupAtCursorDB`.
 
 ## Building a test package
 
+With `make` (run `make help` for the list):
+
+```sh
+make package                    # lint, then build the tarball
+make install                    # lint, build, install into the Retail AddOns folder
+make install ADDONS="/path/to/AddOns"
+```
+
+Or call the scripts directly:
+
 ```sh
 build-tools/make-tarball.sh
 ```
 
 This writes `.release/PopupAtCursor-<version>.tar.gz`, using the version from
 the `.toc` and including only the files the `.toc` loads. Untar it inside
-`Interface/AddOns/`.
+`Interface/AddOns/`, or install it with:
+
+```sh
+build-tools/install-tarball.sh                  # default Retail AddOns folder
+build-tools/install-tarball.sh "/path/to/AddOns" # or any other AddOns folder
+```
+
+The installer defaults to
+`/Applications/World of Warcraft/_retail_/Interface/AddOns` (or `$WOW_ADDONS`
+if set), rebuilds the tarball from the current source, and replaces any existing
+`PopupAtCursor` folder there. `-t FILE` installs a specific tarball as-is;
+`-h` shows help.
 
 ## License
 
