@@ -10,3 +10,6 @@
 # Packaging output
 .release/
 *.zip
+
+# Claude Code personal settings
+.claude/settings.local.json
