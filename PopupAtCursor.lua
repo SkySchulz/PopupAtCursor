@@ -3,7 +3,7 @@
 -- SPDX-License-Identifier: MIT
 -- See LICENSE for the full terms.
 
-local addonName = ...
+local addonName, ns = ...
 
 -- Popups listed in the options panel even before you've seen them.
 -- Names missing from this client's StaticPopupDialogs are hidden.
@@ -223,6 +223,8 @@ loader:SetScript("OnEvent", function(self, _, name)
     db.seen = db.seen or {}
     db.debug = db.debug or false
     RegisterPanel()
+    ns.db = db
+    if ns.OnLoaded then ns.OnLoaded(db) end
     self:UnregisterEvent("ADDON_LOADED")
 end)
 
@@ -232,9 +234,12 @@ SlashCmdList.POPUPATCURSOR = function(msg)
     if msg == "debug" then
         db.debug = not db.debug
         print(PREFIX .. "debug " .. (db.debug and "on" or "off"))
+    elseif msg == "graph" and ns.ToggleGraph then
+        print(PREFIX .. "stats graph " .. (ns.ToggleGraph() and "shown" or "hidden"))
     elseif msg == "help" then
         print(PREFIX .. "/pac - open options")
         print(PREFIX .. "/pac debug - print popup names as they appear")
+        print(PREFIX .. "/pac graph - show/hide the FPS + latency graph")
     else
         OpenPanel()
     end
