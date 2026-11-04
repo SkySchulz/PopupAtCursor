@@ -62,4 +62,4 @@ if set), rebuilds the tarball from the current source, and replaces any existing
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). See [COPYRIGHT.md](COPYRIGHT.md) for copyright and trademark notices.

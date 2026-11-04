@@ -4,6 +4,8 @@
 ## Notes: Moves Static Popup prompt to mouse cursor
 ## SavedVariables: PopupAtCursorDB
 ## Author: Sky Schulz
+## X-Copyright: Copyright (c) 2026 Sky Schulz
+## X-License: MIT
 ## Category: User Interface
 ## Category-deDE: Benutzeroberfläche
 ## Category-esES: Interfaz de usuario

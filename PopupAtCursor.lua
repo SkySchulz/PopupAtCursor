@@ -1,3 +1,8 @@
+-- Popup At Cursor
+-- Copyright (c) 2026 Sky Schulz
+-- SPDX-License-Identifier: MIT
+-- See LICENSE for the full terms.
+
 local addonName = ...
 
 -- Popups listed in the options panel even before you've seen them.
