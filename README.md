@@ -15,12 +15,13 @@ Copy the `PopupAtCursor` folder into `World of Warcraft/_retail_/Interface/AddOn
 
 The addon works automatically once enabled.
 
-| Command      | What it does                                   |
-| ------------ | ---------------------------------------------- |
-| `/pac`       | Open the options panel                         |
-| `/pac debug` | Toggle printing each popup's name as it opens |
-| `/pac graph` | Show or hide the FPS and latency graph         |
-| `/pac help`  | List commands                                  |
+| Command         | What it does                                                      |
+| --------------- | ----------------------------------------------------------------- |
+| `/pac`          | Open the options panel                                            |
+| `/pac debug`    | Toggle printing each popup's name as it opens                     |
+| `/pac graph`    | Show or hide the FPS and latency graph                            |
+| `/pac graph tl` | Move the graph to a corner or edge: `tl` `tc` `tr` `bl` `bc` `br` |
+| `/pac help`     | List commands                                                     |
 
 ### Keeping some popups in place
 
@@ -32,13 +33,16 @@ checked. Settings are saved per account in `PopupAtCursorDB`.
 
 ### FPS and latency graph
 
-A small graph in the top-left corner shows the last 120 seconds of frame
+A small graph (top-left by default) shows the last 120 seconds of frame
 rate (bars) and latency (line). Underneath, two lines give the current FPS
 and latency and their minimum, average and maximum for that period. Green
 means at least 60 fps or under 20 ms, yellow means 30–60 fps or 20–60 ms,
 and red means under 30 fps or over 60 ms.
 It's on by default; `/pac graph` or **Show FPS and latency graph** in the
 options panel hides or shows it, and the choice is saved.
+Hold Shift and drag the graph to place it anywhere, or use `/pac graph tl`
+(and `tc`, `tr`, `bl`, `bc`, `br`) to snap it to a screen corner or edge; the
+position is saved. Without Shift, clicks pass through it.
 Latency comes from the game, which updates it only about every 30 seconds.
 
 ## Building a test package

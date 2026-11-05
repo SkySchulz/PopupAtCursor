@@ -18,6 +18,8 @@ local COL_W = WIDTH / SAMPLES
 local FPS_MAX = 120             -- bar height tops out here
 local LAT_MAX = 150             -- line height tops out here (ms)
 local LINE_H = 2
+local TEXT_H = 30               -- room for the two stats lines under the plot
+local MARGIN = 8                -- gap from the screen edge for /pac graph presets
 
 local GREEN  = { 0.15, 0.90, 0.15 }
 local YELLOW = { 1.00, 0.85, 0.00 }
@@ -48,21 +50,27 @@ local function NoSnap(region)
     end
 end
 
+-- The frame covers the plot and the text under it, so clamping and the
+-- bottom-edge presets keep the text on screen.
 local graph = CreateFrame("Frame", "PopupAtCursorStatsGraph", UIParent)
-graph:SetSize(WIDTH, HEIGHT)
-graph:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 8, -8)
+graph:SetSize(WIDTH, HEIGHT + TEXT_H)
+graph:SetPoint("TOPLEFT", UIParent, "TOPLEFT", MARGIN, -MARGIN)
 graph:SetAlpha(0.75)
 graph:SetFrameStrata("LOW")
-graph:EnableMouse(false)
+graph:SetMovable(true)
+graph:SetClampedToScreen(true)
+graph:RegisterForDrag("LeftButton")
+graph:EnableMouse(false) -- click-through, except while Shift is held (see below)
 graph:Hide()
 
 -- The plot clips the scrolling strip; the text below sits outside the clip.
 local plot = CreateFrame("Frame", nil, graph)
-plot:SetAllPoints()
+plot:SetPoint("TOPLEFT")
+plot:SetSize(WIDTH, HEIGHT)
 plot:SetClipsChildren(true)
 
 local fpsText = graph:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-fpsText:SetPoint("TOPLEFT", graph, "BOTTOMLEFT", 0, -2)
+fpsText:SetPoint("TOPLEFT", plot, "BOTTOMLEFT", 0, -2)
 fpsText:SetJustifyH("LEFT")
 
 local latText = graph:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -198,9 +206,58 @@ graph:SetScript("OnUpdate", function(_, elapsed)
     strip:SetPoint("TOPLEFT", graph, "TOPLEFT", -(elapsedInSample / INTERVAL) * COL_W, 0)
 end)
 
+---------------------------------------------------------------------------
+-- Position: Shift-drag anywhere, or /pac graph tl|tc|tr|bl|bc|br
+---------------------------------------------------------------------------
+
+local PRESETS = {
+    tl = { "TOPLEFT",     MARGIN,  -MARGIN, "top left" },
+    tc = { "TOP",         0,       -MARGIN, "top center" },
+    tr = { "TOPRIGHT",    -MARGIN, -MARGIN, "top right" },
+    bl = { "BOTTOMLEFT",  MARGIN,  MARGIN,  "bottom left" },
+    bc = { "BOTTOM",      0,       MARGIN,  "bottom center" },
+    br = { "BOTTOMRIGHT", -MARGIN, MARGIN,  "bottom right" },
+}
+
+-- Saved as db.graphPos = { point, relativePoint, x, y } against UIParent.
+local function ApplyPosition(pos)
+    graph:ClearAllPoints()
+    graph:SetPoint(pos[1], UIParent, pos[2], pos[3], pos[4])
+end
+
+local function SavePosition()
+    local point, _, relativePoint, x, y = graph:GetPoint(1)
+    ns.db.graphPos = { point, relativePoint, x, y }
+end
+
+local dragging = false
+local function StopDrag()
+    if not dragging then return end
+    dragging = false
+    graph:StopMovingOrSizing()
+    graph:SetUserPlaced(false) -- the addon saves the position, not WoW's layout cache
+    SavePosition()
+end
+
+graph:SetScript("OnDragStart", function(self)
+    dragging = true
+    self:StartMoving()
+end)
+graph:SetScript("OnDragStop", StopDrag)
+
+-- Take the mouse only while Shift is down, so the graph never blocks clicks.
+local function UpdateMouse()
+    local shift = IsShiftKeyDown()
+    if not shift then StopDrag() end
+    graph:EnableMouse(shift)
+end
+graph:RegisterEvent("MODIFIER_STATE_CHANGED")
+graph:SetScript("OnEvent", UpdateMouse)
+
 -- Nothing is sampled while hidden (by /pac graph, Alt-Z or a cinematic), so
 -- start over rather than butting old samples up against new ones.
 graph:SetScript("OnShow", function()
+    UpdateMouse()
     elapsedInSample, frames = 0, 0
     for k = #fpsHist, 1, -1 do
         fpsHist[k], latHist[k] = nil, nil
@@ -219,7 +276,25 @@ function ns.ToggleGraph()
     return ns.db.graph
 end
 
+-- Move to a preset ("tl", "tc", ...) and show the graph. Returns the
+-- preset's name, or nil if `where` isn't one.
+function ns.PlaceGraph(where)
+    local p = PRESETS[where]
+    if not p then return nil end
+    ns.db.graphPos = { p[1], p[1], p[2], p[3] }
+    ApplyPosition(ns.db.graphPos)
+    ns.SetGraphShown(true)
+    return p[4]
+end
+
 function ns.OnLoaded(db)
     if db.graph == nil then db.graph = true end -- POC: on by default
+    local pos = db.graphPos
+    if type(pos) == "table" and type(pos[1]) == "string" and type(pos[2]) == "string"
+            and type(pos[3]) == "number" and type(pos[4]) == "number" then
+        ApplyPosition(pos)
+    else
+        db.graphPos = nil
+    end
     graph:SetShown(db.graph)
 end

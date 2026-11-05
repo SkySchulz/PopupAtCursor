@@ -30,5 +30,6 @@ read_globals = {
 
     -- input and stats
     "GetCursorPosition",
+    "IsShiftKeyDown",
     "GetNetStats",
 }

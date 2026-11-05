@@ -16,7 +16,8 @@ local COMMON = {
 }
 
 local PREFIX = "|cff33ff99PopupAtCursor:|r "
-local db -- PopupAtCursorDB: { skip = {name=true}, seen = {name=text|true}, debug = bool, graph = bool }
+local db -- PopupAtCursorDB: { skip = {name=true}, seen = {name=text|true}, debug = bool, graph = bool,
+--                            graphPos = { point, relativePoint, x, y } }
 
 -- Turn a popup's prompt into one plain line: drop color/texture codes,
 -- replace format placeholders with "...", collapse whitespace.
@@ -245,16 +246,28 @@ end)
 SLASH_POPUPATCURSOR1 = "/pac"
 SlashCmdList.POPUPATCURSOR = function(msg)
     msg = (msg or ""):lower():match("^%s*(.-)%s*$")
+    local cmd, arg = msg:match("^(%S*)%s*(.-)$")
     if msg == "debug" then
         db.debug = not db.debug
         print(PREFIX .. "debug " .. (db.debug and "on" or "off"))
-    elseif msg == "graph" and ns.ToggleGraph then
-        print(PREFIX .. "stats graph " .. (ns.ToggleGraph() and "shown" or "hidden"))
+    elseif cmd == "graph" and ns.ToggleGraph then
+        if arg == "" then
+            print(PREFIX .. "stats graph " .. (ns.ToggleGraph() and "shown" or "hidden"))
+        else
+            local where = ns.PlaceGraph(arg)
+            if where then
+                print(PREFIX .. "stats graph moved to " .. where)
+            else
+                print(PREFIX .. "usage: /pac graph [tl|tc|tr|bl|bc|br]")
+            end
+        end
     elseif msg == "help" then
         print(PREFIX .. "/pac - open options")
         print(PREFIX .. "/pac debug - print popup names as they appear")
         if ns.ToggleGraph then
             print(PREFIX .. "/pac graph - show/hide the FPS + latency graph")
+            print(PREFIX .. "/pac graph tl|tc|tr|bl|bc|br - move it to a screen corner or edge")
+            print(PREFIX .. "Shift-drag the graph to place it anywhere")
         end
     else
         OpenPanel()
