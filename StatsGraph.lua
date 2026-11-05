@@ -63,7 +63,7 @@ graph:RegisterForDrag("LeftButton")
 graph:EnableMouse(false) -- click-through, except while Shift is held (see below)
 graph:Hide()
 
--- The plot clips the scrolling strip; the text below sits outside the clip.
+-- The plot clips the scrolling strips; the text below sits outside the clip.
 local plot = CreateFrame("Frame", nil, graph)
 plot:SetPoint("TOPLEFT")
 plot:SetSize(WIDTH, HEIGHT)
@@ -77,33 +77,68 @@ local latText = graph:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 latText:SetPoint("TOPLEFT", fpsText, "BOTTOMLEFT", 0, -2)
 latText:SetJustifyH("LEFT")
 
--- All columns live on one strip, one column wider than the graph. Each frame
--- only the strip moves; columns are restyled when a new sample arrives.
-local strip = CreateFrame("Frame", nil, plot)
-strip:SetSize(WIDTH + COL_W, HEIGHT)
-strip:SetPoint("TOPLEFT")
+-- Two strips, each one graph wide, leapfrog through the clipping plot like a
+-- viewport over a strip twice the graph's width. Sample k is drawn once, into
+-- column c = (k-1) % SAMPLES + 1 of strip A or B in turn, and never restyled.
+-- Each frame only the current strip moves; the other is anchored to its left
+-- edge and follows. When a strip starts refilling, the two swap anchors.
+-- The refilling strip's old columns sit right of the newest sample, so the plot
+-- clips them until they're overwritten.
+local strips = {}
+for s = 1, 2 do
+    local strip = CreateFrame("Frame", nil, plot)
+    strip:SetSize(WIDTH, HEIGHT)
+    strip.bars, strip.lines = {}, {}
+    for c = 1, SAMPLES do
+        local bar = strip:CreateTexture(nil, "ARTWORK")
+        bar:SetColorTexture(1, 1, 1)
+        bar:SetWidth(COL_W)
+        bar:SetPoint("BOTTOMLEFT", strip, "BOTTOMLEFT", (c - 1) * COL_W, 0)
+        NoSnap(bar)
+        bar:Hide()
+        strip.bars[c] = bar
 
-local bars, lines = {}, {}
-for i = 1, SAMPLES + 1 do
-    local x = (i - 1) * COL_W
-    local bar = strip:CreateTexture(nil, "ARTWORK")
-    bar:SetColorTexture(1, 1, 1)
-    bar:SetWidth(COL_W)
-    bar:SetPoint("BOTTOMLEFT", strip, "BOTTOMLEFT", x, 0)
-    NoSnap(bar)
-    bar:Hide()
-    bars[i] = bar
-
-    local line = strip:CreateTexture(nil, "OVERLAY")
-    line:SetColorTexture(1, 1, 1)
-    line:SetSize(COL_W, LINE_H)
-    NoSnap(line)
-    line:Hide()
-    lines[i] = line
+        local line = strip:CreateTexture(nil, "OVERLAY")
+        line:SetColorTexture(1, 1, 1)
+        line:SetSize(COL_W, LINE_H)
+        NoSnap(line)
+        line:Hide()
+        strip.lines[c] = line
+    end
+    strips[s] = strip
 end
 
--- Oldest sample first; the newest sits in the extra column at the right edge.
-local fpsHist, latHist = {}, {}
+-- Ring buffers of the last SAMPLES samples; sample k sits at slot (k-1) % SAMPLES + 1,
+-- the same index as its column. Used only for the stats text.
+local fpsRing, latRing = {}, {}
+local count = 0     -- samples taken since the graph was last shown
+local current       -- the strip holding the newest sample
+
+local function Slot(k) return (k - 1) % SAMPLES + 1 end
+local function StripFor(k) return strips[math.floor((k - 1) / SAMPLES) % 2 + 1] end
+
+-- Put `strip` under the plot's control and hang the other strip off its left edge.
+-- (Clear first: the two strips anchor to each other, and a cycle is an error.)
+local function MakeCurrent(strip)
+    local other = strip == strips[1] and strips[2] or strips[1]
+    strip:ClearAllPoints()
+    strip:SetPoint("TOPLEFT", plot, "TOPLEFT", WIDTH, 0)
+    other:ClearAllPoints()
+    other:SetPoint("TOPRIGHT", strip, "TOPLEFT", 0, 0)
+    current = strip
+end
+
+local function Reset()
+    for s = 1, 2 do
+        for c = 1, SAMPLES do
+            strips[s].bars[c]:Hide()
+            strips[s].lines[c]:Hide()
+        end
+    end
+    for i = 1, SAMPLES do fpsRing[i], latRing[i] = nil, nil end
+    count = 0
+    MakeCurrent(strips[1])
+end
 
 local function Colored(value, colorFn)
     if not value then return "|cff808080--|r" end
@@ -113,64 +148,58 @@ local function Colored(value, colorFn)
         math.floor(value + 0.5))
 end
 
--- min/avg/max over the samples currently on screen (the newest SAMPLES),
--- skipping samples with no data (false). Returns nil if there are none.
-local function Summarize(hist)
-    local n = #hist
-    local lo, hi, sum, count = math.huge, -math.huge, 0, 0
-    for k = math.max(1, n - SAMPLES + 1), n do
-        local v = hist[k]
+-- min/avg/max over the samples on screen (the ring), skipping samples with no
+-- data (false). Returns nil if there are none.
+local function Summarize(ring)
+    local lo, hi, sum, n = math.huge, -math.huge, 0, 0
+    for i = 1, math.min(count, SAMPLES) do
+        local v = ring[i]
         if v then
             if v < lo then lo = v end
             if v > hi then hi = v end
-            sum, count = sum + v, count + 1
+            sum, n = sum + v, n + 1
         end
     end
-    if count == 0 then return nil end
-    return lo, sum / count, hi
+    if n == 0 then return nil end
+    return lo, sum / n, hi
 end
 
-local function StatsLine(fontString, label, hist, colorFn)
-    if #hist == 0 then
+local function StatsLine(fontString, label, ring, colorFn)
+    if count == 0 then
         fontString:SetText("")
         return
     end
-    local lo, avg, hi = Summarize(hist)
+    local lo, avg, hi = Summarize(ring)
     fontString:SetText(string.format("%s  cur %s  min %s  avg %s  max %s", label,
-        Colored(hist[#hist], colorFn), Colored(lo, colorFn),
+        Colored(ring[Slot(count)], colorFn), Colored(lo, colorFn),
         Colored(avg, colorFn), Colored(hi, colorFn)))
 end
 
 local function UpdateStats()
-    StatsLine(fpsText, "FPS", fpsHist, FpsColor)
-    StatsLine(latText, "MS ", latHist, LatencyColor)
+    StatsLine(fpsText, "FPS", fpsRing, FpsColor)
+    StatsLine(latText, "MS ", latRing, LatencyColor)
 end
 
-local function Render()
-    local first = SAMPLES + 2 - #fpsHist
-    for i = 1, SAMPLES + 1 do
-        local k = i - first + 1
-        local fps, lat = fpsHist[k], latHist[k]
-        local bar, line = bars[i], lines[i]
-        if fps then
-            local c = FpsColor(fps)
-            bar:SetVertexColor(c[1], c[2], c[3], 0.55)
-            bar:SetHeight(math.max(1, math.min(fps / FPS_MAX, 1) * HEIGHT))
-            bar:Show()
+-- Record sample k = count + 1 and draw its column: one bar and one dash.
+local function AddSample(fps, lat)
+    count = count + 1
+    local c, strip = Slot(count), StripFor(count)
+    fpsRing[c], latRing[c] = fps, lat
+    if c == 1 and strip ~= current then MakeCurrent(strip) end
 
-            if lat then
-                c = LatencyColor(lat)
-                local y = math.min(lat / LAT_MAX, 1) * (HEIGHT - LINE_H)
-                line:SetVertexColor(c[1], c[2], c[3], 1)
-                line:SetPoint("BOTTOMLEFT", strip, "BOTTOMLEFT", (i - 1) * COL_W, y)
-                line:Show()
-            else
-                line:Hide()
-            end
-        else
-            bar:Hide()
-            line:Hide()
-        end
+    local bar, line = strip.bars[c], strip.lines[c]
+    local col = FpsColor(fps)
+    bar:SetVertexColor(col[1], col[2], col[3], 0.55)
+    bar:SetHeight(math.max(1, math.min(fps / FPS_MAX, 1) * HEIGHT))
+    bar:Show()
+    if lat then
+        col = LatencyColor(lat)
+        line:SetPoint("BOTTOMLEFT", strip, "BOTTOMLEFT", (c - 1) * COL_W,
+            math.min(lat / LAT_MAX, 1) * (HEIGHT - LINE_H))
+        line:SetVertexColor(col[1], col[2], col[3], 1)
+        line:Show()
+    else
+        line:Hide()
     end
 end
 
@@ -194,16 +223,14 @@ graph:SetScript("OnUpdate", function(_, elapsed)
             fps = frames / elapsedInSample
             frames, elapsedInSample = 0, 0
         end
-        fpsHist[#fpsHist + 1] = fps
-        latHist[#latHist + 1] = Latency()
-        if #fpsHist > SAMPLES + 1 then
-            table.remove(fpsHist, 1)
-            table.remove(latHist, 1)
-        end
-        Render()
+        AddSample(fps, Latency())
         UpdateStats()
     end
-    strip:SetPoint("TOPLEFT", graph, "TOPLEFT", -(elapsedInSample / INTERVAL) * COL_W, 0)
+    if count > 0 then
+        -- The newest column slides in from the right edge over one interval.
+        local x = WIDTH - (elapsedInSample / INTERVAL + Slot(count) - 1) * COL_W
+        current:SetPoint("TOPLEFT", plot, "TOPLEFT", x, 0)
+    end
 end)
 
 ---------------------------------------------------------------------------
@@ -266,10 +293,7 @@ graph:SetScript("OnEvent", UpdateMouse)
 graph:SetScript("OnShow", function()
     UpdateMouse()
     elapsedInSample, frames = 0, 0
-    for k = #fpsHist, 1, -1 do
-        fpsHist[k], latHist[k] = nil, nil
-    end
-    Render()
+    Reset()
     UpdateStats()
 end)
 
