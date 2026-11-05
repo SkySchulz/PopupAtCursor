@@ -180,11 +180,14 @@ graph:SetScript("OnShow", function()
     UpdateStats()
 end)
 
+function ns.SetGraphShown(shown)
+    ns.db.graph = shown
+    graph:SetShown(shown)
+end
+
 function ns.ToggleGraph()
-    local db = ns.db
-    db.graph = not graph:IsShown()
-    graph:SetShown(db.graph)
-    return db.graph
+    ns.SetGraphShown(not graph:IsShown())
+    return ns.db.graph
 end
 
 function ns.OnLoaded(db)

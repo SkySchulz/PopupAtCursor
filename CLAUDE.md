@@ -30,7 +30,8 @@ with an options panel for popups to leave in place. Single Lua file plus `.toc`.
   (`UIPanelScrollFrameTemplate`, `UICheckButtonTemplate`, `UIPanelButtonTemplate`).
 - Popup frames are `StaticPopup1..4`. Their prompt fontstring may be `.text`, `.Text` or
   `<name>Text`, so check all three.
-- Saved settings: `PopupAtCursorDB` = `{ skip = {name=true}, seen = {name=text|true}, debug = bool }`.
+- Saved settings: `PopupAtCursorDB` = `{ skip = {name=true}, seen = {name=text|true}, debug = bool,
+  graph = bool }`.
 - Changing the `.toc` (including `SavedVariables`) needs a full game restart; Lua-only
   changes need just `/reload`. Bump `## Version:` for each test build.
 - Nothing can be tested in-game from here: say what still needs an in-game check.

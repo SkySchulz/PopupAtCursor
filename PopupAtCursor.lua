@@ -16,7 +16,7 @@ local COMMON = {
 }
 
 local PREFIX = "|cff33ff99PopupAtCursor:|r "
-local db -- PopupAtCursorDB: { skip = {name=true}, seen = {name=text|true}, debug = bool }
+local db -- PopupAtCursorDB: { skip = {name=true}, seen = {name=text|true}, debug = bool, graph = bool }
 
 -- Turn a popup's prompt into one plain line: drop color/texture codes,
 -- replace format placeholders with "...", collapse whitespace.
@@ -89,7 +89,7 @@ help:SetText("Checked popups stay where Blizzard puts them. Popups you've seen a
 
 local scroll = CreateFrame("ScrollFrame", nil, panel, "UIPanelScrollFrameTemplate")
 scroll:SetPoint("TOPLEFT", help, "BOTTOMLEFT", 0, -12)
-scroll:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -36, 52)
+scroll:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -36, 78)
 
 local content = CreateFrame("Frame", nil, scroll)
 content:SetSize(1, 1)
@@ -171,6 +171,20 @@ debugLabel:SetPoint("LEFT", debugBox, "RIGHT", 4, 0)
 debugLabel:SetText("Debug: print popup names as they appear")
 debugBox:SetScript("OnClick", function(self) db.debug = self:GetChecked() and true or false end)
 panel:HookScript("OnShow", function() debugBox:SetChecked(db and db.debug) end)
+
+-- StatsGraph.lua loads after this file, so look up ns.SetGraphShown when used.
+local graphBox = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
+graphBox:SetPoint("BOTTOMLEFT", debugBox, "TOPLEFT", 0, 0)
+local graphLabel = graphBox:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+graphLabel:SetPoint("LEFT", graphBox, "RIGHT", 4, 0)
+graphLabel:SetText("Show FPS and latency graph")
+graphBox:SetScript("OnClick", function(self)
+    if ns.SetGraphShown then ns.SetGraphShown(self:GetChecked() and true or false) end
+end)
+panel:HookScript("OnShow", function()
+    graphBox:SetShown(ns.SetGraphShown ~= nil)
+    graphBox:SetChecked(db and db.graph)
+end)
 
 local forget = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
 forget:SetSize(170, 22)
