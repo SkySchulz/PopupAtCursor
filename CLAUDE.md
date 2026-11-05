@@ -1,7 +1,12 @@
 # PopupAtCursor
 
 World of Warcraft addon that moves StaticPopup dialogs to the mouse cursor,
-with an options panel for popups to leave in place. Single Lua file plus `.toc`.
+with an options panel for popups to leave in place.
+
+- `PopupAtCursor.lua`: popup hook, options panel, saved settings, `/pac` command.
+- `StatsGraph.lua`: FPS + latency graph. Loads after the main file and talks to it
+  through the addon namespace (`ns.OnLoaded`, `ns.ToggleGraph`, `ns.SetGraphShown`).
+- `.toc` load order matters, and only files it lists are packaged.
 
 ## Build and test
 
