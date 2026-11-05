@@ -5,6 +5,7 @@
 
 -- Proof of concept: scrolling FPS + latency graph for the last 120 seconds.
 -- FPS is drawn as bars from the bottom; latency as a thin line on top.
+-- A line of text under the graph shows min/avg/max FPS for the visible period.
 
 local _, ns = ...
 
@@ -49,12 +50,20 @@ graph:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 8, -8)
 graph:SetAlpha(0.75)
 graph:SetFrameStrata("LOW")
 graph:EnableMouse(false)
-graph:SetClipsChildren(true)
 graph:Hide()
+
+-- The plot clips the scrolling strip; the text below sits outside the clip.
+local plot = CreateFrame("Frame", nil, graph)
+plot:SetAllPoints()
+plot:SetClipsChildren(true)
+
+local stats = graph:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+stats:SetPoint("TOPLEFT", graph, "BOTTOMLEFT", 0, -2)
+stats:SetJustifyH("LEFT")
 
 -- All columns live on one strip, one column wider than the graph. Each frame
 -- only the strip moves; columns are restyled when a new sample arrives.
-local strip = CreateFrame("Frame", nil, graph)
+local strip = CreateFrame("Frame", nil, plot)
 strip:SetSize(WIDTH + COL_W, HEIGHT)
 strip:SetPoint("TOPLEFT")
 
@@ -79,6 +88,32 @@ end
 
 -- Oldest sample first; the newest sits in the extra column at the right edge.
 local fpsHist, latHist = {}, {}
+
+local function Colored(fps)
+    local c = FpsColor(fps)
+    return string.format("|cff%02x%02x%02x%d|r",
+        math.floor(c[1] * 255), math.floor(c[2] * 255), math.floor(c[3] * 255),
+        math.floor(fps + 0.5))
+end
+
+-- min/avg/max over the samples currently on screen (the newest SAMPLES).
+local function UpdateStats()
+    local n = #fpsHist
+    if n == 0 then
+        stats:SetText("")
+        return
+    end
+    local first = math.max(1, n - SAMPLES + 1)
+    local lo, hi, sum = math.huge, 0, 0
+    for k = first, n do
+        local fps = fpsHist[k]
+        if fps < lo then lo = fps end
+        if fps > hi then hi = fps end
+        sum = sum + fps
+    end
+    stats:SetText(string.format("FPS  min %s  avg %s  max %s",
+        Colored(lo), Colored(sum / (n - first + 1)), Colored(hi)))
+end
 
 local function Render()
     local first = SAMPLES + 2 - #fpsHist
@@ -119,12 +154,14 @@ graph:SetScript("OnUpdate", function(_, elapsed)
         -- keep the leftover so scrolling stays smooth; drop it after a long hitch
         elapsedInSample = math.min(elapsedInSample - INTERVAL, INTERVAL)
         Render()
+        UpdateStats()
     end
     strip:SetPoint("TOPLEFT", graph, "TOPLEFT", -(elapsedInSample / INTERVAL) * COL_W, 0)
 end)
 
 graph:SetScript("OnShow", function()
     elapsedInSample, frames = 0, 0
+    UpdateStats()
 end)
 
 function ns.ToggleGraph()
