@@ -5,8 +5,8 @@
 
 -- Proof of concept: scrolling FPS + latency graph for the last 120 seconds.
 -- FPS is drawn as bars from the bottom; latency as a thin line on top.
--- Two lines of text under the graph show min/avg/max FPS and latency for the
--- visible period.
+-- Two lines of text under the graph show current FPS and latency, plus
+-- min/avg/max for the visible period.
 
 local _, ns = ...
 
@@ -115,19 +115,20 @@ local function Summarize(hist)
     return lo, sum / (n - first + 1), hi
 end
 
-local function StatsLine(fontString, label, unit, hist, colorFn)
+local function StatsLine(fontString, label, hist, colorFn)
     if #hist == 0 then
         fontString:SetText("")
         return
     end
     local lo, avg, hi = Summarize(hist)
-    fontString:SetText(string.format("%s  min %s  avg %s  max %s%s", label,
-        Colored(lo, colorFn), Colored(avg, colorFn), Colored(hi, colorFn), unit))
+    fontString:SetText(string.format("%s  cur %s  min %s  avg %s  max %s", label,
+        Colored(hist[#hist], colorFn), Colored(lo, colorFn),
+        Colored(avg, colorFn), Colored(hi, colorFn)))
 end
 
 local function UpdateStats()
-    StatsLine(fpsText, "FPS", "", fpsHist, FpsColor)
-    StatsLine(latText, "MS ", " ms", latHist, LatencyColor)
+    StatsLine(fpsText, "FPS", fpsHist, FpsColor)
+    StatsLine(latText, "MS ", latHist, LatencyColor)
 end
 
 local function Render()

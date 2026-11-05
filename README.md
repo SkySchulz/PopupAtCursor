@@ -33,9 +33,10 @@ checked. Settings are saved per account in `PopupAtCursorDB`.
 ### FPS and latency graph
 
 A small graph in the top-left corner shows the last 120 seconds of frame
-rate (bars) and latency (line), with the minimum, average and maximum
-FPS and latency for that period underneath. Green means at least 60 fps or under 20 ms,
-yellow means 30–60 fps or 20–60 ms, and red means under 30 fps or over 60 ms.
+rate (bars) and latency (line). Underneath, two lines give the current FPS
+and latency and their minimum, average and maximum for that period. Green
+means at least 60 fps or under 20 ms, yellow means 30–60 fps or 20–60 ms,
+and red means under 30 fps or over 60 ms.
 It's on by default; `/pac graph` hides or shows it, and the choice is saved.
 Latency comes from the game, which updates it only about every 30 seconds.
 
