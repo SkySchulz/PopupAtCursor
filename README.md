@@ -38,11 +38,15 @@ rate (bars) and latency (line). Underneath, two lines give the current FPS
 and latency and their minimum, average and maximum for that period. Green
 means at least 60 fps or under 20 ms, yellow means 30–60 fps or 20–60 ms,
 and red means under 30 fps or over 60 ms.
-It's on by default; `/pac graph` or **Show FPS and latency graph** in the
-options panel hides or shows it, and the choice is saved.
+It's off by default: turn it on with `/pac graph`, a position such as
+`/pac graph tl`, or **Show FPS and latency graph** in the options panel. The
+choice is saved.
+
 Hold Shift and drag the graph to place it anywhere, or snap it with
 `/pac graph` plus a position: `t`/`m`/`b` (top, middle, bottom) followed by
-`l`/`c`/`r` (left, center, right), e.g. `tl` or `mc`. The position is saved. Without Shift, clicks pass through it.
+`l`/`c`/`r` (left, center, right), e.g. `tl` or `mc`. The position is saved.
+Without Shift, clicks pass through it.
+
 Latency comes from the game, which updates it only about every 30 seconds.
 
 ## Building a test package

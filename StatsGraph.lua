@@ -321,7 +321,7 @@ end
 
 function ns.OnLoaded(savedDB)
     db = savedDB
-    if db.graph == nil then db.graph = true end -- POC: on by default
+    if db.graph == nil then db.graph = false end -- off until the user turns it on
     local pos = db.graphPos
     if type(pos) == "table" and type(pos[1]) == "string" and type(pos[2]) == "string"
             and type(pos[3]) == "number" and type(pos[4]) == "number" then
