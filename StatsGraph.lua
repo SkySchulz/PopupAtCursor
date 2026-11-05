@@ -9,6 +9,7 @@
 -- min/avg/max for the visible period.
 
 local _, ns = ...
+local db -- PopupAtCursorDB, handed over by ns.OnLoaded at ADDON_LOADED
 
 local WIDTH, HEIGHT = 240, 60   -- pixels
 local WINDOW = 120              -- seconds shown
@@ -261,7 +262,7 @@ end
 
 local function SavePosition()
     local point, _, relativePoint, x, y = graph:GetPoint(1)
-    ns.db.graphPos = { point, relativePoint, x, y }
+    db.graphPos = { point, relativePoint, x, y }
 end
 
 local dragging = false
@@ -298,13 +299,13 @@ graph:SetScript("OnShow", function()
 end)
 
 function ns.SetGraphShown(shown)
-    ns.db.graph = shown
+    db.graph = shown
     graph:SetShown(shown)
 end
 
 function ns.ToggleGraph()
     ns.SetGraphShown(not graph:IsShown())
-    return ns.db.graph
+    return db.graph
 end
 
 -- Move to a preset ("tl", "tc", ...) and show the graph. Returns the
@@ -312,13 +313,14 @@ end
 function ns.PlaceGraph(where)
     local p = PRESETS[where]
     if not p then return nil end
-    ns.db.graphPos = { p[1], p[1], p[2], p[3] }
-    ApplyPosition(ns.db.graphPos)
+    db.graphPos = { p[1], p[1], p[2], p[3] }
+    ApplyPosition(db.graphPos)
     ns.SetGraphShown(true)
     return p[4]
 end
 
-function ns.OnLoaded(db)
+function ns.OnLoaded(savedDB)
+    db = savedDB
     if db.graph == nil then db.graph = true end -- POC: on by default
     local pos = db.graphPos
     if type(pos) == "table" and type(pos[1]) == "string" and type(pos[2]) == "string"

@@ -238,7 +238,6 @@ loader:SetScript("OnEvent", function(self, _, name)
     db.seen = db.seen or {}
     db.debug = db.debug or false
     RegisterPanel()
-    ns.db = db
     if ns.OnLoaded then ns.OnLoaded(db) end
     self:UnregisterEvent("ADDON_LOADED")
 end)
