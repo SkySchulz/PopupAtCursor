@@ -160,15 +160,27 @@ graph:SetScript("OnUpdate", function(_, elapsed)
     elapsedInSample = elapsedInSample + elapsed
     frames = frames + 1
     if elapsedInSample >= INTERVAL then
-        fpsHist[#fpsHist + 1] = frames / elapsedInSample
+        local over = elapsedInSample - INTERVAL
+        local fps
+        if over < INTERVAL then
+            -- The last frame straddles the boundary: credit the part past it to
+            -- the next sample, so the scroll stays smooth and FPS stays exact.
+            local carry = over / elapsed
+            fps = (frames - carry) / INTERVAL
+            frames, elapsedInSample = carry, over
+        else
+            -- A long hitch (loading screen, freeze): one low sample for the
+            -- whole stretch, then start fresh instead of charging the leftover
+            -- to the next frame.
+            fps = frames / elapsedInSample
+            frames, elapsedInSample = 0, 0
+        end
+        fpsHist[#fpsHist + 1] = fps
         latHist[#latHist + 1] = Latency()
         if #fpsHist > SAMPLES + 1 then
             table.remove(fpsHist, 1)
             table.remove(latHist, 1)
         end
-        frames = 0
-        -- keep the leftover so scrolling stays smooth; drop it after a long hitch
-        elapsedInSample = math.min(elapsedInSample - INTERVAL, INTERVAL)
         Render()
         UpdateStats()
     end
