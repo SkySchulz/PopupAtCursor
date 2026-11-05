@@ -19,6 +19,7 @@ The addon works automatically once enabled.
 | ------------ | ---------------------------------------------- |
 | `/pac`       | Open the options panel                         |
 | `/pac debug` | Toggle printing each popup's name as it opens |
+| `/pac graph` | Show or hide the FPS and latency graph         |
 | `/pac help`  | List commands                                  |
 
 ### Keeping some popups in place
@@ -28,6 +29,14 @@ popup that should stay where Blizzard puts it. The list shows common popups
 plus every popup you've seen, each with a short version of its prompt; hover
 a row for the full text. **Forget unchecked** clears seen popups you haven't
 checked. Settings are saved per account in `PopupAtCursorDB`.
+
+### FPS and latency graph
+
+A small graph in the top-left corner shows the last 120 seconds of frame
+rate (bars) and latency (line). Green means at least 60 fps or under 20 ms,
+yellow means 30–60 fps or 20–60 ms, and red means under 30 fps or over 60 ms.
+It's on by default; `/pac graph` hides or shows it, and the choice is saved.
+Latency comes from the game, which updates it only about every 30 seconds.
 
 ## Building a test package
 
