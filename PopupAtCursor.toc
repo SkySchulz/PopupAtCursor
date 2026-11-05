@@ -1,6 +1,6 @@
 ## Interface: 120105, 50504, 20506, 16001, 11509
 ## Title: Popup At Cursor
-## Version: 0.4.1-poc
+## Version: 0.4.2-poc
 ## Notes: Moves Static Popup prompt to mouse cursor
 ## SavedVariables: PopupAtCursorDB
 ## Author: Sky Schulz

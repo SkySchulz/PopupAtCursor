@@ -5,7 +5,8 @@
 
 -- Proof of concept: scrolling FPS + latency graph for the last 120 seconds.
 -- FPS is drawn as bars from the bottom; latency as a thin line on top.
--- A line of text under the graph shows min/avg/max FPS for the visible period.
+-- Two lines of text under the graph show min/avg/max FPS and latency for the
+-- visible period.
 
 local _, ns = ...
 
@@ -57,9 +58,13 @@ local plot = CreateFrame("Frame", nil, graph)
 plot:SetAllPoints()
 plot:SetClipsChildren(true)
 
-local stats = graph:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-stats:SetPoint("TOPLEFT", graph, "BOTTOMLEFT", 0, -2)
-stats:SetJustifyH("LEFT")
+local fpsText = graph:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+fpsText:SetPoint("TOPLEFT", graph, "BOTTOMLEFT", 0, -2)
+fpsText:SetJustifyH("LEFT")
+
+local latText = graph:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+latText:SetPoint("TOPLEFT", fpsText, "BOTTOMLEFT", 0, -2)
+latText:SetJustifyH("LEFT")
 
 -- All columns live on one strip, one column wider than the graph. Each frame
 -- only the strip moves; columns are restyled when a new sample arrives.
@@ -89,30 +94,40 @@ end
 -- Oldest sample first; the newest sits in the extra column at the right edge.
 local fpsHist, latHist = {}, {}
 
-local function Colored(fps)
-    local c = FpsColor(fps)
+local function Colored(value, colorFn)
+    local c = colorFn(value)
     return string.format("|cff%02x%02x%02x%d|r",
         math.floor(c[1] * 255), math.floor(c[2] * 255), math.floor(c[3] * 255),
-        math.floor(fps + 0.5))
+        math.floor(value + 0.5))
 end
 
 -- min/avg/max over the samples currently on screen (the newest SAMPLES).
-local function UpdateStats()
-    local n = #fpsHist
-    if n == 0 then
-        stats:SetText("")
+local function Summarize(hist)
+    local n = #hist
+    local first = math.max(1, n - SAMPLES + 1)
+    local lo, hi, sum = math.huge, -math.huge, 0
+    for k = first, n do
+        local v = hist[k]
+        if v < lo then lo = v end
+        if v > hi then hi = v end
+        sum = sum + v
+    end
+    return lo, sum / (n - first + 1), hi
+end
+
+local function StatsLine(fontString, label, unit, hist, colorFn)
+    if #hist == 0 then
+        fontString:SetText("")
         return
     end
-    local first = math.max(1, n - SAMPLES + 1)
-    local lo, hi, sum = math.huge, 0, 0
-    for k = first, n do
-        local fps = fpsHist[k]
-        if fps < lo then lo = fps end
-        if fps > hi then hi = fps end
-        sum = sum + fps
-    end
-    stats:SetText(string.format("FPS  min %s  avg %s  max %s",
-        Colored(lo), Colored(sum / (n - first + 1)), Colored(hi)))
+    local lo, avg, hi = Summarize(hist)
+    fontString:SetText(string.format("%s  min %s  avg %s  max %s%s", label,
+        Colored(lo, colorFn), Colored(avg, colorFn), Colored(hi, colorFn), unit))
+end
+
+local function UpdateStats()
+    StatsLine(fpsText, "FPS", "", fpsHist, FpsColor)
+    StatsLine(latText, "MS ", " ms", latHist, LatencyColor)
 end
 
 local function Render()
