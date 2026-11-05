@@ -175,8 +175,14 @@ graph:SetScript("OnUpdate", function(_, elapsed)
     strip:SetPoint("TOPLEFT", graph, "TOPLEFT", -(elapsedInSample / INTERVAL) * COL_W, 0)
 end)
 
+-- Nothing is sampled while hidden (by /pac graph, Alt-Z or a cinematic), so
+-- start over rather than butting old samples up against new ones.
 graph:SetScript("OnShow", function()
     elapsedInSample, frames = 0, 0
+    for k = #fpsHist, 1, -1 do
+        fpsHist[k], latHist[k] = nil, nil
+    end
+    Render()
     UpdateStats()
 end)
 
