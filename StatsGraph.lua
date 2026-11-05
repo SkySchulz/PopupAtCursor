@@ -33,9 +33,12 @@ local function LatencyColor(ms)
     return RED
 end
 
+-- false until the game has reported a latency (0 just after login/reload),
+-- so "no data" isn't drawn or counted as a perfect 0 ms.
 local function Latency()
     local _, _, home, world = GetNetStats()
-    return math.max(home or 0, world or 0)
+    local ms = math.max(home or 0, world or 0)
+    return ms > 0 and ms or false
 end
 
 local function NoSnap(region)
@@ -95,24 +98,28 @@ end
 local fpsHist, latHist = {}, {}
 
 local function Colored(value, colorFn)
+    if not value then return "|cff808080--|r" end
     local c = colorFn(value)
     return string.format("|cff%02x%02x%02x%d|r",
         math.floor(c[1] * 255), math.floor(c[2] * 255), math.floor(c[3] * 255),
         math.floor(value + 0.5))
 end
 
--- min/avg/max over the samples currently on screen (the newest SAMPLES).
+-- min/avg/max over the samples currently on screen (the newest SAMPLES),
+-- skipping samples with no data (false). Returns nil if there are none.
 local function Summarize(hist)
     local n = #hist
-    local first = math.max(1, n - SAMPLES + 1)
-    local lo, hi, sum = math.huge, -math.huge, 0
-    for k = first, n do
+    local lo, hi, sum, count = math.huge, -math.huge, 0, 0
+    for k = math.max(1, n - SAMPLES + 1), n do
         local v = hist[k]
-        if v < lo then lo = v end
-        if v > hi then hi = v end
-        sum = sum + v
+        if v then
+            if v < lo then lo = v end
+            if v > hi then hi = v end
+            sum, count = sum + v, count + 1
+        end
     end
-    return lo, sum / (n - first + 1), hi
+    if count == 0 then return nil end
+    return lo, sum / count, hi
 end
 
 local function StatsLine(fontString, label, hist, colorFn)
@@ -143,11 +150,15 @@ local function Render()
             bar:SetHeight(math.max(1, math.min(fps / FPS_MAX, 1) * HEIGHT))
             bar:Show()
 
-            c = LatencyColor(lat)
-            local y = math.min(lat / LAT_MAX, 1) * (HEIGHT - LINE_H)
-            line:SetVertexColor(c[1], c[2], c[3], 1)
-            line:SetPoint("BOTTOMLEFT", strip, "BOTTOMLEFT", (i - 1) * COL_W, y)
-            line:Show()
+            if lat then
+                c = LatencyColor(lat)
+                local y = math.min(lat / LAT_MAX, 1) * (HEIGHT - LINE_H)
+                line:SetVertexColor(c[1], c[2], c[3], 1)
+                line:SetPoint("BOTTOMLEFT", strip, "BOTTOMLEFT", (i - 1) * COL_W, y)
+                line:Show()
+            else
+                line:Hide()
+            end
         else
             bar:Hide()
             line:Hide()
