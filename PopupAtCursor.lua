@@ -229,7 +229,18 @@ end
 
 local loader = CreateFrame("Frame")
 loader:RegisterEvent("ADDON_LOADED")
-loader:SetScript("OnEvent", function(self, _, name)
+loader:RegisterEvent("PLAYER_LOGIN")
+loader:SetScript("OnEvent", function(self, event, name)
+    if event == "PLAYER_LOGIN" then
+        -- after login (and each /reload), once the chat frame is up
+        if ns.ToggleGraph then
+            print(PREFIX .. "/pac graph - toggle FPS/latency graph; /pac help - for more")
+        else
+            print(PREFIX .. "/pac help - for more")
+        end
+        self:UnregisterEvent("PLAYER_LOGIN")
+        return
+    end
     if name ~= addonName then return end
     PopupAtCursorDB = PopupAtCursorDB or {}
     db = PopupAtCursorDB
