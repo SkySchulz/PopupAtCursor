@@ -5,7 +5,9 @@ with an options panel for popups to leave in place. Single Lua file plus `.toc`.
 
 ## Build and test
 
-- `make lint`: `luac -p` on every `.lua` the `.toc` loads. Run after every Lua change.
+- `make lint`: `luac -p`, then `luacheck` (skipped with a note if not installed), on every
+  `.lua` the `.toc` loads. Run after every Lua change. `.luacheckrc` sets Lua 5.1 and lists
+  the WoW globals in use: add new API calls to `read_globals`, globals the addon writes to `globals`.
 - `make package`: `build-tools/make-tarball.sh` → `.release/PopupAtCursor-<version>.tar.gz`.
 - `make install ADDONS=<dir>`: `build-tools/install-tarball.sh`, which rebuilds the
   tarball and replaces `<dir>/PopupAtCursor`.

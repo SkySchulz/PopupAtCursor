@@ -43,10 +43,15 @@ Latency comes from the game, which updates it only about every 30 seconds.
 With `make` (run `make help` for the list):
 
 ```sh
+make lint                       # luac -p, plus luacheck if installed
 make package                    # lint, then build the tarball
 make install                    # lint, build, install into the Retail AddOns folder
 make install ADDONS="/path/to/AddOns"
 ```
+
+`make lint` runs [luacheck](https://github.com/lunarmodules/luacheck) when
+it's installed (`brew install luacheck`, or `luarocks install luacheck`);
+`.luacheckrc` holds its settings and the WoW globals the addon uses.
 
 Or call the scripts directly:
 
