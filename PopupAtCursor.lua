@@ -264,7 +264,9 @@ SlashCmdList.POPUPATCURSOR = function(msg)
     elseif msg == "help" then
         print(PREFIX .. "/pac - open options")
         print(PREFIX .. "/pac debug - print popup names as they appear")
-        print(PREFIX .. "/pac graph - show/hide the FPS + latency graph")
+        if ns.ToggleGraph then
+            print(PREFIX .. "/pac graph - show/hide the FPS + latency graph")
+        end
     else
         OpenPanel()
     end
