@@ -20,7 +20,7 @@ The addon works automatically once enabled.
 | `/pac`          | Open the options panel                                            |
 | `/pac debug`    | Toggle printing each popup's name as it opens                     |
 | `/pac graph`    | Show or hide the FPS and latency graph                            |
-| `/pac graph tl` | Move the graph to a corner or edge: `tl` `tc` `tr` `bl` `bc` `br` |
+| `/pac graph tl` | Move the graph: `tl` `tc` `tr` `ml` `mc` `mr` `bl` `bc` `br`      |
 | `/pac help`     | List commands                                                     |
 
 ### Keeping some popups in place
@@ -40,9 +40,9 @@ means at least 60 fps or under 20 ms, yellow means 30–60 fps or 20–60 ms,
 and red means under 30 fps or over 60 ms.
 It's on by default; `/pac graph` or **Show FPS and latency graph** in the
 options panel hides or shows it, and the choice is saved.
-Hold Shift and drag the graph to place it anywhere, or use `/pac graph tl`
-(and `tc`, `tr`, `bl`, `bc`, `br`) to snap it to a screen corner or edge; the
-position is saved. Without Shift, clicks pass through it.
+Hold Shift and drag the graph to place it anywhere, or snap it with
+`/pac graph` plus a position: `t`/`m`/`b` (top, middle, bottom) followed by
+`l`/`c`/`r` (left, center, right), e.g. `tl` or `mc`. The position is saved. Without Shift, clicks pass through it.
 Latency comes from the game, which updates it only about every 30 seconds.
 
 ## Building a test package

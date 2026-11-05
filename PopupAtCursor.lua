@@ -258,7 +258,7 @@ SlashCmdList.POPUPATCURSOR = function(msg)
             if where then
                 print(PREFIX .. "stats graph moved to " .. where)
             else
-                print(PREFIX .. "usage: /pac graph [tl|tc|tr|bl|bc|br]")
+                print(PREFIX .. "usage: /pac graph [" .. ns.GRAPH_PRESETS .. "]")
             end
         end
     elseif msg == "help" then
@@ -266,7 +266,7 @@ SlashCmdList.POPUPATCURSOR = function(msg)
         print(PREFIX .. "/pac debug - print popup names as they appear")
         if ns.ToggleGraph then
             print(PREFIX .. "/pac graph - show/hide the FPS + latency graph")
-            print(PREFIX .. "/pac graph tl|tc|tr|bl|bc|br - move it to a screen corner or edge")
+            print(PREFIX .. "/pac graph " .. ns.GRAPH_PRESETS .. " - move it (top/middle/bottom, left/center/right)")
             print(PREFIX .. "Shift-drag the graph to place it anywhere")
         end
     else

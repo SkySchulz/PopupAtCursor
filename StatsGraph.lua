@@ -207,17 +207,24 @@ graph:SetScript("OnUpdate", function(_, elapsed)
 end)
 
 ---------------------------------------------------------------------------
--- Position: Shift-drag anywhere, or /pac graph tl|tc|tr|bl|bc|br
+-- Position: Shift-drag anywhere, or /pac graph tl|tc|tr|ml|mc|mr|bl|bc|br
 ---------------------------------------------------------------------------
 
 local PRESETS = {
     tl = { "TOPLEFT",     MARGIN,  -MARGIN, "top left" },
     tc = { "TOP",         0,       -MARGIN, "top center" },
     tr = { "TOPRIGHT",    -MARGIN, -MARGIN, "top right" },
+    ml = { "LEFT",        MARGIN,  0,       "middle left" },
+    mc = { "CENTER",      0,       0,       "center" },
+    mr = { "RIGHT",       -MARGIN, 0,       "middle right" },
     bl = { "BOTTOMLEFT",  MARGIN,  MARGIN,  "bottom left" },
     bc = { "BOTTOM",      0,       MARGIN,  "bottom center" },
     br = { "BOTTOMRIGHT", -MARGIN, MARGIN,  "bottom right" },
 }
+
+-- Preset names in screen order, "||"-separated: a lone "|" starts a chat
+-- escape code (|t texture, |c color...), so chat needs "||" for a literal pipe.
+ns.GRAPH_PRESETS = "tl||tc||tr||ml||mc||mr||bl||bc||br"
 
 -- Saved as db.graphPos = { point, relativePoint, x, y } against UIParent.
 local function ApplyPosition(pos)
