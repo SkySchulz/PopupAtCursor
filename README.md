@@ -13,8 +13,7 @@ Copy the `PopupAtCursor` folder into `World of Warcraft/_retail_/Interface/AddOn
 
 ## Usage
 
-The addon works automatically once enabled. At login it prints a one-line
-reminder of `/pac graph` and `/pac help` in chat.
+The addon works automatically once enabled.
 
 | Command      | What it does                                   |
 | ------------ | ---------------------------------------------- |
